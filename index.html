@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1DLE: The Ultimate Historical Vault (2012-2026)</title>
+<style>
+    body { background: #0a0a0a; color: white; font-family: 'Segoe UI', Roboto, Arial, sans-serif; text-align: center; padding: 20px; margin: 0; }
+    h1 { color: #e10600; margin-bottom: 5px; letter-spacing: 3px; font-weight: 900; }
+    .sub { color: #aaa; margin-bottom: 25px; font-size: 0.9em; text-transform: uppercase; }
+    .input-container { margin-bottom: 25px; position: sticky; top: 0; background: #0a0a0a; padding: 15px; z-index: 1000; border-bottom: 1px solid #333; }
+
+    /* Autocomplete wrapper */
+    .autocomplete-wrapper {
+        display: inline-block;
+        position: relative;
+        vertical-align: middle;
+    }
+    input { padding: 14px; font-size: 16px; width: 350px; border-radius: 8px; border: 1px solid #444; background: #1a1a1a; color: white; outline: none; transition: 0.3s; }
+    input:focus { border-color: #e10600; box-shadow: 0 0 10px rgba(225, 6, 0, 0.3); }
+
+    /* Dropdown list */
+    #autocomplete-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        background: #1a1a1a;
+        border: 1px solid #e10600;
+        border-radius: 8px;
+        max-height: 260px;
+        overflow-y: auto;
+        z-index: 2000;
+        box-shadow: 0 8px 30px rgba(225,6,0,0.2);
+        text-align: left;
+        display: none;
+    }
+    #autocomplete-list::-webkit-scrollbar { width: 6px; }
+    #autocomplete-list::-webkit-scrollbar-track { background: #111; border-radius: 8px; }
+    #autocomplete-list::-webkit-scrollbar-thumb { background: #e10600; border-radius: 8px; }
+
+    .ac-item {
+        padding: 11px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        color: #ddd;
+        border-bottom: 1px solid #2a2a2a;
+        transition: background 0.15s, color 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.active {
+        background: #e10600;
+        color: white;
+    }
+    .ac-item .ac-highlight { color: #ff6b6b; font-weight: 900; }
+    .ac-item:hover .ac-highlight, .ac-item.active .ac-highlight { color: #ffd0d0; }
+    .ac-team-tag {
+        margin-left: auto;
+        font-size: 11px;
+        color: #888;
+        font-weight: 400;
+        white-space: nowrap;
+    }
+    .ac-item:hover .ac-team-tag, .ac-item.active .ac-team-tag { color: #ffccc; opacity: 0.8; }
+
+    button { padding: 14px 25px; font-size: 16px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-guess { background: #e10600; color: white; margin-left: 10px; vertical-align: middle; }
+    .btn-guess:hover { background: #ff1e1e; transform: scale(1.05); }
+    #shareBtn { display: none; background: #28a745; color: white; margin: 25px auto; }
+    .legend { font-size: 0.85em; margin: 20px auto; color: #bbb; border: 1px solid #222; padding: 20px; max-width: 950px; border-radius: 12px; background: #111; line-height: 1.8; }
+    .grid-wrap { max-width: 1300px; margin: 0 auto; overflow-x: auto; padding-bottom: 50px; }
+    .header, .row { display: grid; grid-template-columns: 2.2fr 1.6fr 1.6fr 0.6fr 0.7fr 0.6fr 0.6fr; gap: 8px; margin-bottom: 8px; min-width: 1050px; }
+    .header div { font-weight: 900; color: #666; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; padding: 10px 0; }
+    .row div { padding: 18px 8px; border-radius: 6px; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; background: #252525; box-shadow: inset 0 0 5px rgba(0,0,0,0.5); }
+    .green { background: #1b8a3e !important; border: 1px solid #28a745; }
+    .orange { background: #d97706 !important; border: 1px solid #fbbf24; }
+    .purple { background: #6b21a8 !important; border: 1px solid #a855f7; }
+</style>
+</head>
+<body>
+
+    <h1>🏁 F1DLE: ULTIMATE VAULT</h1>
+    <div class="sub">115+ Drivers | Full Careers | 2012 - 2026</div>
+
+    <div class="input-container">
+        <div class="autocomplete-wrapper">
+            <input type="text" id="guessInput" placeholder="Enter Full Driver Name..." autocomplete="off"
+                oninput="onInputChange()" onkeydown="onKeyDown(event)">
+            <div id="autocomplete-list"></div>
+        </div>
+        <button class="btn-guess" onclick="guessDriver()">GUESS</button>
+        <button id="shareBtn" onclick="copyToClipboard()">📋 COPY STATS</button>
+    </div>
+
+    <div class="legend">
+        <b>Team:</b> <span style="color:#28a745">🟩 Exact Match</span> | <span style="color:#d97706">🟧 Guess drove for Secret's team (or vice-versa)</span><br>
+        <b>Nation:</b> <span style="color:#28a745">🟩 Match</span> | <span style="color:#d97706">🟧 Same Continent</span><br>
+        <b>Stats:</b> <span style="color:#d97706">🟧 Secret is Higher (↑)</span> | <span style="color:#a855f7">🟪 Secret is Lower (↓)</span>
+    </div>
+
+    <div class="grid-wrap">
+        <div class="header">
+            <div>Driver</div><div>Last/Current Team</div><div>Nationality</div><div>No.</div><div>Debut</div><div>Age</div><div>Wins</div>
+        </div>
+        <div id="results"></div>
+    </div>
+
+<script>
+const currentYear = 2026;
+let shareEmojis = "";
+let guessCount = 0;
+let gameOver = false;
+let activeIndex = -1;
+let currentMatches = [];
+
+const drivers = [
+    {id:1, name:"Max Verstappen", team:"Red Bull", allTeams:["Red Bull", "Toro Rosso"], nat:"Netherlands", cont:1, no:3, debut:2015, birth:1997, w:71},
+    {id:2, name:"Lando Norris", team:"McLaren", allTeams:["McLaren"], nat:"United Kingdom", cont:1, no:1, debut:2019, birth:1999, w:11},
+    {id:3, name:"Oscar Piastri", team:"McLaren", allTeams:["McLaren"], nat:"Australia", cont:4, no:81, debut:2023, birth:2001, w:9},
+    {id:4, name:"George Russell", team:"Mercedes", allTeams:["Williams", "Mercedes"], nat:"United Kingdom", cont:1, no:63, debut:2019, birth:1998, w:5},
+    {id:5, name:"Kimi Antonelli", team:"Mercedes", allTeams:["Mercedes"], nat:"Italy", cont:1, no:12, debut:2025, birth:2006, w:0},
+    {id:6, name:"Charles Leclerc", team:"Ferrari", allTeams:["Sauber", "Alfa Romeo", "Ferrari"], nat:"Monaco", cont:1, no:16, debut:2018, birth:1997, w:8},
+    {id:7, name:"Lewis Hamilton", team:"Ferrari", allTeams:["McLaren", "Mercedes", "Ferrari"], nat:"United Kingdom", cont:1, no:44, debut:2007, birth:1985, w:105},
+    {id:8, name:"Isack Hadjar", team:"Red Bull", allTeams:["Racing Bulls", "Red Bull"], nat:"France", cont:1, no:6, debut:2025, birth:2004, w:0},
+    {id:9, name:"Fernando Alonso", team:"Aston Martin", allTeams:["Renault", "McLaren", "Ferrari", "Alpine", "Aston Martin"], nat:"Spain", cont:1, no:14, debut:2001, birth:1981, w:32},
+    {id:10, name:"Lance Stroll", team:"Aston Martin", allTeams:["Williams", "Racing Point", "Aston Martin"], nat:"Canada", cont:2, no:18, debut:2017, birth:1998, w:0},
+    {id:11, name:"Pierre Gasly", team:"Alpine", allTeams:["Toro Rosso", "Red Bull", "AlphaTauri", "Alpine"], nat:"France", cont:1, no:10, debut:2017, birth:1996, w:1},
+    {id:12, name:"Franco Colapinto", team:"Alpine", allTeams:["Williams", "Alpine"], nat:"Argentina", cont:2, no:43, debut:2024, birth:2003, w:0},
+    {id:13, name:"Nico Hulkenberg", team:"Audi", allTeams:["Williams", "Force India", "Sauber", "Renault", "Racing Point", "Aston Martin", "Haas", "Audi"], nat:"Germany", cont:1, no:27, debut:2010, birth:1987, w:0},
+    {id:14, name:"Gabriel Bortoleto", team:"Audi", allTeams:["Sauber", "Audi"], nat:"Brazil", cont:2, no:5, debut:2025, birth:2004, w:0},
+    {id:15, name:"Esteban Ocon", team:"Haas", allTeams:["Manor", "Force India", "Renault", "Alpine", "Haas"], nat:"France", cont:1, no:31, debut:2016, birth:1996, w:1},
+    {id:16, name:"Oliver Bearman", team:"Haas", allTeams:["Ferrari", "Haas"], nat:"United Kingdom", cont:1, no:87, debut:2024, birth:2005, w:0},
+    {id:17, name:"Alexander Albon", team:"Williams", allTeams:["Toro Rosso", "Red Bull", "Williams"], nat:"Thailand", cont:3, no:23, debut:2019, birth:1996, w:0},
+    {id:18, name:"Carlos Sainz", team:"Williams", allTeams:["Toro Rosso", "Renault", "McLaren", "Ferrari", "Williams"], nat:"Spain", cont:1, no:55, debut:2015, birth:1994, w:4},
+    {id:19, name:"Liam Lawson", team:"Racing Bulls", allTeams:["AlphaTauri", "RB", "Racing Bulls"], nat:"New Zealand", cont:4, no:30, debut:2023, birth:2002, w:0},
+    {id:20, name:"Arvid Lindblad", team:"Racing Bulls", allTeams:["Racing Bulls"], nat:"United Kingdom", cont:1, no:41, debut:2026, birth:2007, w:0},
+    {id:21, name:"Sergio Perez", team:"Cadillac", allTeams:["Sauber", "McLaren", "Force India", "Racing Point", "Red Bull", "Cadillac"], nat:"Mexico", cont:2, no:11, debut:2011, birth:1990, w:6},
+    {id:22, name:"Valtteri Bottas", team:"Cadillac", allTeams:["Williams", "Mercedes", "Alfa Romeo", "Sauber", "Cadillac"], nat:"Finland", cont:1, no:77, debut:2013, birth:1989, w:10},
+    {id:23, name:"Jack Doohan", team:"Alpine", allTeams:["Alpine"], nat:"Australia", cont:4, no:61, debut:2025, birth:2003, w:0},
+    {id:24, name:"Sebastian Vettel", team:"Aston Martin", allTeams:["BMW Sauber", "Toro Rosso", "Red Bull", "Ferrari", "Aston Martin"], nat:"Germany", cont:1, no:5, debut:2007, birth:1987, w:53},
+    {id:25, name:"Kimi Raikkonen", team:"Alfa Romeo", allTeams:["Sauber", "McLaren", "Ferrari", "Lotus", "Alfa Romeo"], nat:"Finland", cont:1, no:7, debut:2001, birth:1979, w:21},
+    {id:26, name:"Daniel Ricciardo", team:"RB", allTeams:["HRT", "Toro Rosso", "Red Bull", "Renault", "McLaren", "AlphaTauri", "RB"], nat:"Australia", cont:4, no:3, debut:2011, birth:1989, w:8},
+    {id:27, name:"Yuki Tsunoda", team:"Racing Bulls", allTeams:["AlphaTauri", "RB", "Racing Bulls"], nat:"Japan", cont:3, no:22, debut:2021, birth:2000, w:0},
+    {id:28, name:"Kevin Magnussen", team:"Haas", allTeams:["McLaren", "Renault", "Haas"], nat:"Denmark", cont:1, no:20, debut:2014, birth:1992, w:0},
+    {id:29, name:"Guanyu Zhou", team:"Sauber", allTeams:["Alfa Romeo", "Sauber"], nat:"China", cont:3, no:24, debut:2022, birth:1999, w:0},
+    {id:30, name:"Logan Sargeant", team:"Williams", allTeams:["Williams"], nat:"United States", cont:2, no:2, debut:2023, birth:2000, w:0},
+    {id:31, name:"Nicholas Latifi", team:"Williams", allTeams:["Williams"], nat:"Canada", cont:2, no:6, debut:2020, birth:1995, w:0},
+    {id:32, name:"Nikita Mazepin", team:"Haas", allTeams:["Haas"], nat:"Russia", cont:1, no:9, debut:2021, birth:1999, w:0},
+    {id:33, name:"Mick Schumacher", team:"Haas", allTeams:["Haas"], nat:"Germany", cont:1, no:47, debut:2021, birth:1999, w:0},
+    {id:34, name:"Antonio Giovinazzi", team:"Alfa Romeo", allTeams:["Sauber", "Alfa Romeo"], nat:"Italy", cont:1, no:99, debut:2017, birth:1993, w:0},
+    {id:35, name:"Romain Grosjean", team:"Haas", allTeams:["Renault", "Lotus", "Haas"], nat:"France", cont:1, no:8, debut:2009, birth:1886, w:0},
+    {id:36, name:"Marcus Ericsson", team:"Sauber", allTeams:["Caterham", "Sauber"], nat:"Sweden", cont:1, no:9, debut:2014, birth:1990, w:0},
+    {id:37, name:"Stoffel Vandoorne", team:"McLaren", allTeams:["McLaren"], nat:"Belgium", cont:1, no:2, debut:2016, birth:1992, w:0},
+    {id:38, name:"Felipe Massa", team:"Williams", allTeams:["Sauber", "Ferrari", "Williams"], nat:"Brazil", cont:2, no:19, debut:2002, birth:1981, w:11},
+    {id:39, name:"Jenson Button", team:"McLaren", allTeams:["Williams", "Renault", "BAR", "Honda", "Brawn", "McLaren"], nat:"United Kingdom", cont:1, no:22, debut:2000, birth:1980, w:15},
+    {id:40, name:"Nico Rosberg", team:"Mercedes", allTeams:["Williams", "Mercedes"], nat:"Germany", cont:1, no:6, debut:2006, birth:1985, w:23},
+    {id:41, name:"Daniil Kvyat", team:"AlphaTauri", allTeams:["Toro Rosso", "Red Bull", "AlphaTauri"], nat:"Russia", cont:1, no:26, debut:2014, birth:1994, w:0},
+    {id:42, name:"Robert Kubica", team:"Alfa Romeo", allTeams:["BMW Sauber", "Renault", "Williams", "Alfa Romeo"], nat:"Poland", cont:1, no:88, debut:2006, birth:1984, w:1},
+    {id:43, name:"Nyck de Vries", team:"AlphaTauri", allTeams:["Williams", "AlphaTauri"], nat:"Netherlands", cont:1, no:21, debut:2022, birth:1995, w:0},
+    {id:44, name:"Michael Schumacher", team:"Mercedes", allTeams:["Jordan", "Benetton", "Ferrari", "Mercedes"], nat:"Germany", cont:1, no:7, debut:1991, birth:1969, w:91},
+    {id:45, name:"Mark Webber", team:"Red Bull", allTeams:["Minardi", "Jaguar", "Williams", "Red Bull"], nat:"Australia", cont:4, no:2, debut:2002, birth:1976, w:9},
+    {id:46, name:"Pastor Maldonado", team:"Lotus", allTeams:["Williams", "Lotus"], nat:"Venezuela", cont:2, no:13, debut:2011, birth:1985, w:1},
+    {id:47, name:"Kamui Kobayashi", team:"Caterham", allTeams:["Toyota", "Sauber", "Caterham"], nat:"Japan", cont:3, no:10, debut:2009, birth:1986, w:0},
+    {id:48, name:"Vitaly Petrov", team:"Caterham", allTeams:["Renault", "Lotus", "Caterham"], nat:"Russia", cont:1, no:10, debut:2010, birth:1984, w:0},
+    {id:49, name:"Bruno Senna", team:"Williams", allTeams:["HRT", "Renault", "Williams"], nat:"Brazil", cont:2, no:19, debut:2010, birth:1983, w:0},
+    {id:50, name:"Paul di Resta", team:"Williams", allTeams:["Force India", "Williams"], nat:"United Kingdom", cont:1, no:40, debut:2011, birth:1986, w:0},
+    {id:51, name:"Jean-Éric Vergne", team:"Toro Rosso", allTeams:["Toro Rosso"], nat:"France", cont:1, no:25, debut:2012, birth:1990, w:0},
+    {id:52, name:"Charles Pic", team:"Caterham", allTeams:["Marussia", "Caterham"], nat:"France", cont:1, no:25, debut:2012, birth:1990, w:0},
+    {id:53, name:"Timo Glock", team:"Marussia", allTeams:["Jordan", "Toyota", "Virgin", "Marussia"], nat:"Germany", cont:1, no:24, debut:2004, birth:1982, w:0},
+    {id:54, name:"Heikki Kovalainen", team:"Lotus", allTeams:["Renault", "McLaren", "Caterham", "Lotus"], nat:"Finland", cont:1, no:20, debut:2007, birth:1981, w:1},
+    {id:55, name:"Pedro de la Rosa", team:"HRT", allTeams:["Arrows", "Jaguar", "McLaren", "Sauber", "HRT"], nat:"Spain", cont:1, no:22, debut:1999, birth:1971, w:0},
+    {id:56, name:"Narain Karthikeyan", team:"HRT", allTeams:["Jordan", "HRT"], nat:"India", cont:3, no:22, debut:2005, birth:1977, w:0},
+    {id:57, name:"Jules Bianchi", team:"Marussia", allTeams:["Marussia"], nat:"France", cont:1, no:17, debut:2013, birth:1989, w:0},
+    {id:58, name:"Max Chilton", team:"Marussia", allTeams:["Marussia"], nat:"United Kingdom", cont:1, no:23, debut:2013, birth:1991, w:0},
+    {id:59, name:"Giedo van der Garde", team:"Caterham", allTeams:["Caterham"], nat:"Netherlands", cont:1, no:21, debut:2013, birth:1985, w:0},
+    {id:60, name:"Esteban Gutierrez", team:"Haas", allTeams:["Sauber", "Haas"], nat:"Mexico", cont:2, no:21, debut:2013, birth:1991, w:0},
+    {id:61, name:"Adrian Sutil", team:"Sauber", allTeams:["Spyker", "Force India", "Sauber"], nat:"Germany", cont:1, no:99, debut:2007, birth:1983, w:0},
+    {id:62, name:"Will Stevens", team:"Manor", allTeams:["Caterham", "Manor"], nat:"United Kingdom", cont:1, no:28, debut:2014, birth:1991, w:0},
+    {id:63, name:"Roberto Merhi", team:"Manor", allTeams:["Manor"], nat:"Spain", cont:1, no:98, debut:2015, birth:1991, w:0},
+    {id:64, name:"Alexander Rossi", team:"Manor", allTeams:["Manor"], nat:"United States", cont:2, no:53, debut:2015, birth:1991, w:0},
+    {id:65, name:"Felipe Nasr", team:"Sauber", allTeams:["Sauber"], nat:"Brazil", cont:2, no:12, debut:2015, birth:1992, w:0},
+    {id:66, name:"Rio Haryanto", team:"Manor", allTeams:["Manor"], nat:"Indonesia", cont:3, no:88, debut:2016, birth:1993, w:0},
+    {id:67, name:"Jolyon Palmer", team:"Renault", allTeams:["Renault"], nat:"United Kingdom", cont:1, no:30, debut:2016, birth:1991, w:0},
+    {id:68, name:"Pascal Wehrlein", team:"Sauber", allTeams:["Manor", "Sauber"], nat:"Germany", cont:1, no:94, debut:2016, birth:1994, w:0},
+    {id:69, name:"Brendon Hartley", team:"Toro Rosso", allTeams:["Toro Rosso"], nat:"New Zealand", cont:4, no:28, debut:2017, birth:1989, w:0},
+    {id:70, name:"Sergey Sirotkin", team:"Williams", allTeams:["Williams"], nat:"Russia", cont:1, no:35, debut:2018, birth:1995, w:0},
+    {id:71, name:"Jack Aitken", team:"Williams", allTeams:["Williams"], nat:"United Kingdom", cont:1, no:89, debut:2020, birth:1995, w:0},
+    {id:72, name:"Pietro Fittipaldi", team:"Haas", allTeams:["Haas"], nat:"Brazil", cont:2, no:51, debut:2020, birth:1996, w:0},
+    {id:73, name:"Andre Lotterer", team:"Caterham", allTeams:["Caterham"], nat:"Germany", cont:1, no:45, debut:2014, birth:1981, w:0},
+    {id:74, name:"Jerome d'Ambrosio", team:"Lotus", allTeams:["Virgin", "Lotus"], nat:"Belgium", cont:1, no:10, debut:2011, birth:1985, w:0}
+];
+
+function getDailyDriver() {
+    const startDate = new Date("2026-01-01");
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    startDate.setHours(0,0,0,0);
+    const diffTime = today - startDate;
+    const dayNumber = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return drivers[dayNumber % drivers.length];
+}
+
+const secret = getDailyDriver();
+
+// ── Autocomplete logic ──────────────────────────────────────────
+
+function highlightMatch(text, query) {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return (
+        text.slice(0, idx) +
+        `<span class="ac-highlight">${text.slice(idx, idx + query.length)}</span>` +
+        text.slice(idx + query.length)
+    );
+}
+
+function onInputChange() {
+    const val = document.getElementById("guessInput").value.trim();
+    const list = document.getElementById("autocomplete-list");
+    activeIndex = -1;
+
+    if (!val) { list.style.display = "none"; return; }
+
+    currentMatches = drivers.filter(d =>
+        d.name.toLowerCase().includes(val.toLowerCase())
+    ).slice(0, 12);
+
+    if (!currentMatches.length) { list.style.display = "none"; return; }
+
+    list.innerHTML = currentMatches.map((d, i) =>
+        `<div class="ac-item" data-index="${i}" onmousedown="selectDriver('${d.name.replace(/'/g, "\\'")}')">
+            <span>${highlightMatch(d.name, val)}</span>
+        </div>`
+    ).join("");
+
+    list.style.display = "block";
+}
+
+function onKeyDown(e) {
+    const list = document.getElementById("autocomplete-list");
+    const items = list.querySelectorAll(".ac-item");
+
+    if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        updateActive(items);
+    } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+        updateActive(items);
+    } else if (e.key === "Enter") {
+        if (activeIndex >= 0 && currentMatches[activeIndex]) {
+            selectDriver(currentMatches[activeIndex].name);
+        } else {
+            guessDriver();
+        }
+    } else if (e.key === "Escape") {
+        list.style.display = "none";
+    }
+}
+
+function updateActive(items) {
+    items.forEach((el, i) => {
+        el.classList.toggle("active", i === activeIndex);
+        if (i === activeIndex) el.scrollIntoView({ block: "nearest" });
+    });
+}
+
+function selectDriver(name) {
+    document.getElementById("guessInput").value = name;
+    document.getElementById("autocomplete-list").style.display = "none";
+    activeIndex = -1;
+    guessDriver();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+    if (!e.target.closest(".autocomplete-wrapper")) {
+        document.getElementById("autocomplete-list").style.display = "none";
+    }
+});
+
+// ── Game logic ──────────────────────────────────────────────────
+
+function guessDriver() {
+    if (gameOver) return;
+    const input = document.getElementById("guessInput");
+    const val = input.value.trim().toLowerCase();
+
+    const guess = drivers.find(d =>
+        d.name.toLowerCase() === val ||
+        d.name.toLowerCase().split(' ').pop() === val
+    );
+
+    if (!guess) {
+        alert("Driver not found in the Vault! (Check spelling or try full name)");
+        return;
+    }
+
+    guessCount++;
+    const row = document.createElement("div");
+    row.className = "row";
+    let rowEmoji = "";
+
+    row.appendChild(createCell(guess.name, guess.name === secret.name ? "green" : ""));
+    rowEmoji += (guess.name === secret.name ? "🟩" : "⬛");
+
+    let teamClass = "";
+    if (guess.team === secret.team) { teamClass = "green"; rowEmoji += "🟩"; }
+    else if (secret.allTeams.includes(guess.team) || guess.allTeams.includes(secret.team)) { teamClass = "orange"; rowEmoji += "🟧"; }
+    else { rowEmoji += "⬛"; }
+    row.appendChild(createCell(guess.team, teamClass));
+
+    let natClass = "";
+    if (guess.nat === secret.nat) { natClass = "green"; rowEmoji += "🟩"; }
+    else if (guess.cont === secret.cont) { natClass = "orange"; rowEmoji += "🟧"; }
+    else { rowEmoji += "⬛"; }
+    row.appendChild(createCell(guess.nat, natClass));
+
+    const stats = [
+        { v: guess.no, s: secret.no },
+        { v: guess.debut, s: secret.debut },
+        { v: currentYear - guess.birth, s: currentYear - secret.birth },
+        { v: guess.w, s: secret.w }
+    ];
+
+    stats.forEach(st => {
+        let stClass = "";
+        if (st.v === st.s) { stClass = "green"; rowEmoji += "🟩"; }
+        else if (st.v < st.s) { stClass = "orange"; rowEmoji += "🟧"; }
+        else { stClass = "purple"; rowEmoji += "🟪"; }
+        row.appendChild(createCell(st.v, stClass));
+    });
+
+    shareEmojis += rowEmoji + "\n";
+    document.getElementById("results").prepend(row);
+    input.value = "";
+    document.getElementById("autocomplete-list").style.display = "none";
+
+    if (guess.name === secret.name) {
+        gameOver = true;
+        document.getElementById("shareBtn").style.display = "block";
+        alert(`🏆 PODIUM FINISH! You found #${secret.id}: ${secret.name} in ${guessCount} guesses.`);
+    }
+}
+
+function createCell(text, className) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    if (className) div.classList.add(className);
+    return div;
+}
+
+function copyToClipboard() {
+    const text = `F1DLE Ultimate Vault 🏁\nDriver Found: #${secret.id}\nGuesses: ${guessCount}\n\n${shareEmojis}`;
+    navigator.clipboard.writeText(text).then(() => alert("Stats copied to clipboard!"));
+}
+</script>
+</body>
+</html>
